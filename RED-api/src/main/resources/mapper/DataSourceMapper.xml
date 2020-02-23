@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.enn.dao.DataSourceMapper">
+
+    <resultMap type="cn.enn.base.dto.DataSourceDTO" id="DataDTOMap">
+        <result property="datasourceId" column="datasource_id"/>
+        <result property="datasourceName" column="datasource_name"/>
+        <result property="datasourceShowName" column="datasource_show_name"/>
+        <result property="datasourceType" column="datasource_type"/>
+        <result property="datasourceDescribe" column="datasource_describe"/>
+
+        <collection property="datasourceFieldEntityList" column="datasource_id" ofType="cn.enn.entity.DatasourceFieldEntity" fetchType="lazy">
+            <result property="datasourceId" column="datasource_id"/>
+            <result property="datasourceFieldId" column="datasource_field_id"></result>
+            <result property="fieldNumber" column="field_number"></result>
+            <result property="fieldName" column="field_name"></result>
+            <result property="fieldType" column="field_type" ></result>
+            <result property="fieldShowName" column="field_show_name" ></result>
+            <result property="fieldOptions" column="field_options" ></result>
+            <result property="fieldAttr" column="field_attr" ></result>
+            <result property="fieldSql" column="field_sql" ></result>
+            <result property="units" column="units"/>
+        </collection>
+    </resultMap>
+    <select id="queryCascadeDataSource" resultMap="DataDTOMap">
+        SELECT d.datasource_id,d.datasource_name,d.datasource_show_name,d.datasource_type,d.datasource_describe,f.datasource_field_id,f.datasource_id,f.field_name,f.field_number,f.field_type,f.field_show_name,f.units,f.field_options,f.field_attr,f.field_sql
+        FROM t_datasource d LEFT JOIN t_datasource_field f on d.datasource_id=f.datasource_id
+        WHERE d.datasource_id=#{_datasourceId}
+    </select>
+
+    <select id="queryDataSource" resultMap="DataDTOMap">
+        SELECT d.*,f.* FROM t_datasource d LEFT JOIN t_datasource_field f on d.datasource_id=f.datasource_id
+    </select>
+
+
+
+</mapper>

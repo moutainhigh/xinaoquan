@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.enn.dao.CollectMapper">
+
+    <resultMap type="cn.enn.base.dto.CollectDTO" id="DataDTOMap">
+        <result property="collectId" column="collect_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="ruleId" column="rule_id"/>
+        <result property="collectType" column="collect_type"/>
+        <association property="ruleEntity" javaType="cn.enn.entity.RuleEntity">
+            <result property="ruleId" column="rule_id"></result>
+            <result property="ruleName" column="rule_name"/>
+            <result property="ruleBody" column="rule_body"/>
+            <result property="status" column="status"/>
+            <result property="creatorUserName" column="creator_user_name"></result>
+            <result property="creatorRealName" column="creator_real_name"></result>
+            <result property="updateUserName" column="update_user_name"/>
+            <!--详情条件-->
+            <!--<collection property="labelConditionEntityList" column="rule_id" ofType="cn.enn.entity.LabelConditionEntity">-->
+                <!--<result property="conditionId" column="condition_id"></result>-->
+                <!--<result property="conditionInvite" column="condition_invite"></result>-->
+                <!--<result property="conditionQuestionTags" column="condition_question_tags"></result>-->
+                <!--<result property="conditionStation" column="condition_station"></result>-->
+                <!--<result property="conditionAnswer" column="condition_answer"></result>-->
+                <!--<result property="conditionCreator" column="condition_creator"></result>-->
+                <!--<result property="labelName" column="label_name"></result>-->
+                <!--<result property="labelType" column="label_type"></result>-->
+            <!--</collection>-->
+        </association>
+    </resultMap>
+
+    <select id="searchCollect2" resultMap="DataDTOMap">
+        SELECT c.collect_id,r.rule_id,r.rule_name,r.rule_body,lc.label_name,lc.label_type,r.creator_real_name
+         FROM t_collect c
+         LEFT JOIN t_rule r on c.rule_id=r.rule_id
+         LEFT JOIN t_label_condition lc on r.rule_id=lc.rule_id
+         WHERE 1=1
+         <if test='status != null'>
+          and r.status=#{status}
+         </if>
+         <if test='createId != null'>
+          and c.user_name = #{createId}
+         </if>
+         <if test='newKeyWord != null'>
+          and CONCAT(r.rule_name,r.rule_body,lc.label_name,lc.label_type) REGEXP '${newKeyWord}'
+         </if>
+         ORDER BY r.rule_id DESC
+    </select>
+    <select id="serachCollect2Count" resultType="long">
+        SELECT COUNT(*) FROM (
+        SELECT c.collect_id,GROUP_CONCAT(r.rule_id),GROUP_CONCAT(r.rule_name),GROUP_CONCAT(r.rule_body),GROUP_CONCAT(lc.label_name),GROUP_CONCAT(lc.label_type),GROUP_CONCAT(r.creator_real_name)
+        FROM t_collect c
+        LEFT JOIN t_rule r on c.rule_id=r.rule_id
+        LEFT JOIN t_label_condition lc on r.rule_id=lc.rule_id
+        WHERE 1=1
+        <if test='status != null'>
+            and r.status=#{status}
+        </if>
+        <if test='createId != null'>
+            and c.user_name = #{createId}
+        </if>
+        <if test='newKeyWord != null'>
+            and CONCAT(r.rule_name,r.rule_body,lc.label_name,lc.label_type) REGEXP '${newKeyWord}'
+        </if>
+        GROUP BY c.collect_id )as t
+    </select>
+    <!-- 根据ruleId 批量删除 -->
+    <delete id="removeByRuleIds" parameterType="list">
+        delete from t_collect  where rule_id in
+        <foreach collection="list" item="ruleIds" open="(" separator="," close=")">
+            ${ruleIds}
+        </foreach>
+    </delete>
+
+</mapper>

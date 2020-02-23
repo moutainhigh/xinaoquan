@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.enn.dao.RuleMapper">
+
+    <resultMap type="cn.enn.entity.RuleEntity" id="RestRule">
+        <!--规则-->
+        <result property="ruleId" column="rule_id"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="ruleBodyId" column="rule_body_id"/>
+        <result property="ruleBody" column="rule_body"/>
+        <result property="ruleType" column="rule_type"/>
+        <result property="status" column="status"/>
+        <result property="createType" column="create_type"/>
+        <result property="creatorUserName" column="creator_user_name"/>
+        <result property="creatorRealName" column="creator_real_name"/>
+        <result property="updateUserName" column="update_user_name"/>
+        <result property="creatTime" column="creat_time"/>
+        <result property="updateTime" column="update_time"/>
+        <!--规则-详情-->
+        <collection property="ruleExpressionEntity" column="rule_id" ofType="cn.enn.entity.RuleExpressionEntity">
+            <result property="ruleExpressionId" column="rule_expression_id"/>
+            <result property="ruleId" column="rule_id"/>
+            <result property="labelName" column="label_name"/>
+            <result property="labelShowName" column="label_show_name"/>
+            <result property="labelType" column="label_type"/>
+            <result property="ruleDescription" column="rule_description"/>
+            <result property="ruleExpression" column="rule_expression"/>
+            <result property="ruleExpressionComponent" column="rule_expression_component"/>
+            <result property="ruleExpressionComponentType" column="rule_expression_component_type"/>
+            <collection property="labelConditionEntities" column="rule_expression_id" ofType="cn.enn.entity.LabelConditionEntity">
+                <result property="conditionId" column="condition_id"/>
+                <result property="datasourceFielsId" column="datasource_fiels_id"/>
+                <result property="datasourceFieldName" column="datasource_field_name"/>
+                <result property="datasourceFieldShowName" column="datasource_field_show_name"/>
+                <result property="answer" column="answer"/>
+                <result property="showAnswer" column="show_answer"/>
+                <result property="ruleExpressionId" column="rule_expression_id"/>
+            </collection>
+        </collection>
+        <!--标签对象-->
+        <collection property="labelObjectEntities" column="rule_id" ofType="cn.enn.entity.LabelObjectEntity">
+            <result property="labelObjectId" column="label_object_id"/>
+            <result property="ruleId" column="rule_id"/>
+            <result property="labelObjectRoleId" column="label_object_role_id"/>
+            <result property="labelObjectRole" column="label_object_role"/>
+            <result property="labelObjectOrgId" column="label_object_org_id"/>
+            <result property="labelObjectOrg" column="label_object_org"/>
+            <result property="labelObjectLabelId" column="label_object_label_id"/>
+            <result property="labelObjectLabel" column="label_object_label"/>
+            <result property="labelObjectCreationId" column="label_object_creation_id"/>
+            <result property="labelObjectCreation" column="label_object_creation"/>
+        </collection>
+        <!--协同-->
+        <collection property="collectiveEntityList" column="rule_id" ofType="cn.enn.entity.CollectiveEntity">
+            <result property="ruleId" column="rule_id"/>
+            <result property="collectiveId" column="collective_id"/>
+            <result property="realName" column="real_name"/>
+            <result property="userName" column="user_name"/>
+        </collection>
+        <!--规则数据源-->
+        <collection property="ruleDatasourceVOList" column="rule_id" ofType="cn.enn.base.vo.RuleDatasourceVoOut">
+            <result property="ruleDatasourceId" column="rule_datasource_id"/>
+            <result property="ruleId" column="rule_id"/>
+            <result property="datasourceId" column="datasource_id"/>
+            <result property="datasourceName" column="datasource_name"/>
+            <result property="datasourceShowName" column="datasource_show_name"/>
+            <result property="logic" column="logic"/>
+            <result property="relationship" column="relationship"/>
+            <result property="relationshipShow" column="relationship_show"/>
+            <result property="symbol" column="symbol"/>
+        </collection>
+
+    </resultMap>
+    <!--根据规则id查询规则-->
+    <select id="queryRuleById" parameterType="long" resultMap="RestRule">
+        SELECT
+            *
+        FROM
+            t_rule r
+                LEFT JOIN t_collective c ON r.rule_id=c.rule_id
+                LEFT JOIN t_label_object lo ON r.rule_id = lo.rule_id
+                LEFT JOIN t_rule_expression re ON r.rule_id=re.rule_id
+                LEFT JOIN t_rule_condition rc on re.rule_expression_id=rc.rule_expression_id
+                LEFT JOIN t_rule_datasource rd on r.rule_id=rd.rule_id
+        where r.rule_id=#{ruleId}
+    </select>
+    <!--查询搜索-->
+    <select id="queryRuleView" resultMap="RestRule">
+        select rule_id,rule_name,rule_body,creator_real_name,create_type,rule_type,GROUP_CONCAT(DISTINCT label_name)as label_name,GROUP_CONCAT(DISTINCT label_type)as label_type
+        from rule_view where 1=1
+        <if test="null != newKeyWord and ''!=newKeyWord ">
+            and  concat_ws(rule_name,rule_body,label_name,label_type,creator_real_name)
+            REGEXP '${newKeyWord}'
+        </if>
+        <if test="null != ruleType">
+            and rule_type=#{ruleType}
+        </if>
+        <if test="null != status">
+            and status=#{status}
+        </if>
+        <if test="null != userId and userId != '' ">
+            and (creator_user_name=#{userId} or collective_name=#{userId})
+        </if>
+        GROUP BY rule_id
+        order by rule_id desc
+    </select>
+    <select id="queryRuleViewCount" resultType="long">
+        SELECT COUNT(*) from (
+             SELECT rule_id from rule_view WHERE 1 = 1
+        <if test="null != newKeyWord and ''!=newKeyWord ">
+            and  concat_ws(rule_name,rule_body,label_name,label_type,creator_real_name)
+            REGEXP '${newKeyWord}'
+        </if>
+        <if test="null != status">
+            and status=#{status}
+        </if>
+        <if test="null != userId and userId != '' ">
+            and creator_user_name=#{userId}
+        </if>
+        GROUP BY rule_id ORDER BY rule_id DESC ) as t
+    </select>
+
+</mapper>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.enn.dao.DatasourceFieldMapper">
+
+    <resultMap type="cn.enn.base.vo.DataSourceFieldVO" id="DataDTOMap">
+        <result property="datasourceFieldId" column="datasource_field_id"/>
+        <result property="datasourceId" column="datasource_id"/>
+        <result property="fieldNumber" column="field_number"/>
+        <result property="fieldName" column="field_name"/>
+        <result property="fieldType" column="field_type"/>
+        <result property="fieldShowName" column="field_show_name"/>
+        <result property="units" column="units"/>
+        <result property="fieldOptions" column="field_options"/>
+        <result property="fieldAttr" column="field_attr"/>
+        <result property="fieldSql" column="field_sql"/>
+        <result property="datasourceName" column="datasource_name"/>
+        <result property="datasourceShowName" column="datasource_show_name"/>
+        <result property="fieldSql" column="field_sql"/>
+    </resultMap>
+    <select id="getListByDatasourceIdAndFieldOptions" resultMap="DataDTOMap">
+        SELECT
+            df.datasource_field_id
+            ,d.datasource_id
+            ,field_number
+            ,field_name
+            ,field_type
+            ,field_show_name
+            ,units
+            ,field_options
+            ,field_attr
+            ,field_sql
+            ,datasource_name
+            ,datasource_show_name
+        FROM
+            t_datasource_field df
+            left join t_datasource d
+            on df.datasource_id = d.datasource_id
+        WHERE 1=1
+        <if test="null !=datasourceIds">
+            And df.datasource_id in
+            <foreach collection="datasourceIds" item="datasourceId" open="(" separator="," close=")">
+                ${datasourceId}
+            </foreach>
+        </if>
+        <if test="null !=fieldOptions ">
+          AND field_options = #{fieldOptions}
+        </if>
+    </select>
+    <select id="excSql" resultType="Map">
+        ${strSql}
+    </select>
+
+</mapper>

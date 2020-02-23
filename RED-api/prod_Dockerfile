@@ -1,0 +1,7 @@
+FROM reg.enncloud.cn/enncloud/centos_jdk:1.8.0_131
+MAINTAINER tiantaoc@enn.cn
+RUN mkdir -p /opt
+COPY RED-api/target/RED-api.jar /opt
+WORKDIR /opt
+RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+CMD java  -XX:+UseConcMarkSweepGC -Xms3G -Xmx3G -Dfile.encoding=UTF8 -Duser.timezone=GMT+8:00 -jar RED-api.jar --spring.profiles.active=prod

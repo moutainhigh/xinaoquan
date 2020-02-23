@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.enn.dao.RuleMapper">
+
+    <resultMap type="cn.enn.entity.RuleEntity" id="RuleDTOMap">
+        <result property="ruleId" column="rule_id"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="ruleBodyId" column="rule_body_id"/>
+        <result property="ruleBody" column="rule_body"/>
+        <result property="status" column="status"/>
+        <result property="creatorUserName" column="creator_user_name"/>
+        <result property="creatorRealName" column="creator_real_name"/>
+        <result property="updateUserName" column="update_user_name"/>
+        <!-- 规则协同 -->
+        <collection property="collectiveEntityList" column="rule_id" ofType="cn.enn.entity.CollectiveEntity">
+            <result property="collectiveId" column="collective_id"></result>
+            <result property="ruleId" column="rule_id"></result>
+            <result property="userName" column="user_name"></result>
+            <result property="realName" column="real_name"/>
+        </collection>
+        <!-- 标签对象 -->
+        <collection property="labelObjectEntities" column="rule_id" ofType="cn.enn.entity.LabelObjectEntity">
+            <result property="ruleId" column="rule_id"/>
+            <result property="labelObjectId" column="label_object_id"/>
+            <result property="labelObjectCreation" column="label_object_creation"/>
+            <result property="labelObjectLabel" column="label_object_label"/>
+            <result property="labelObjectOrg" column="label_object_org"/>
+            <result property="labelObjectRole" column="label_object_role"/>
+        </collection>
+    </resultMap>
+
+
+
+    <select id="searchKeyWord" resultMap="RuleDTOMap">
+        SELECT
+        r.rule_id,r.rule_name,r.rule_body,r.label_object,r.label_condition,r.creator_user_name,
+        r.creator_real_name,
+        e.rule_expression_id,e.label_name,e.label_type,e.rule_description,e.rule_expression
+        FROM
+            t_rule r
+                LEFT JOIN t_rule_expression e ON r.rule_id = e.rule_id
+        WHERE
+            r.`status` != 2 and
+            concat(
+                    IFNULL( r.rule_name, '' ),
+                    IFNULL( r.rule_body, '' ),
+                    IFNULL( r.label_object, '' ),
+                    IFNULL( e.label_name, '' ),
+                    IFNULL( e.label_type, '' ))
+        <if test="null !=newKeyWord ">
+            REGEXP '${newKeyWord}'
+        </if>
+
+        <if test="null != userId">
+            and r.creator_user_name=${userId}
+        </if>
+      /*  GROUP BY
+            r.rule_id*/
+    </select>
+    <!-- 查询具体规则 -->
+    <select id="specificExpression" resultMap="RuleDTOMap">
+        select *
+        from t_rule r left join t_collective c on c.rule_id = r.rule_id
+                      left join t_label_object lo on r.rule_id=lo.rule_id
+                      left join t_label_condition lc on r.rule_id = lc.rule_id
+                      left join t_rule_expression e on lc.rule_id=e.rule_id
+        where r.rule_id=#{ruleId}
+    </select>
+    <!-- 原始查询sql -->
+    <select id="getQuestionByPage" resultMap="RuleDTOMap">
+        SELECT em.`rule_id`,em.`rule_name`,em.`rule_body`,
+        GROUP_CONCAT( ep.`label_name` ) AS labelName,
+        GROUP_CONCAT( ep.`label_type` ) AS labelType
+        <if test="null == createId">
+            ,em.creator_real_name
+        </if>
+        FROM t_rule em LEFT JOIN t_rule_expression ep ON em.`rule_id` = ep.`rule_id`
+        WHERE em.STATUS != 2
+        <if test="null != createId">
+            and em.`creator_user_name` = ${createId}
+        </if>
+
+        <if test="status == 1">
+              AND em.`status` = 1
+        </if>
+        GROUP BY em.`rule_id`
+    </select>
+
+
+
+</mapper>
